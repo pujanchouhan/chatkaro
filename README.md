@@ -3,7 +3,7 @@
 An intelligent, conversational chatbot built with **Streamlit** and powered by **free, open-source LLMs (Llama 3.3, Llama 3.1, Gemma 2) hosted on Groq**. NeuraChat goes beyond a basic Q&A bot — it supports multi-session chat history, **live multi-model comparison**, **free voice-to-text input**, a session analytics dashboard, dynamic color theming, and a custom animated cursor. All of it runs at **zero cost**, with no credit card required anywhere in the stack.
 
 🔗 **Live Demo:** https://neurachat-pjvs7smuwoftpmfvytbcg7.streamlit.app/ 
-🔗 **GitHub Repo:** https://github.com/niteshtiwari2444/neurachat
+🔗 **GitHub Repo:** https://github.com/pujanchouhan/chatkaro.git
 
 ---       
      
@@ -98,7 +98,7 @@ Get a **free** Groq API key (no billing required) at https://console.groq.com/ke
 
 ## 👤 Author
 
-**Name:** Nitesh &nbsp;|&nbsp; **Course:** Generative AI &nbsp;|&nbsp; **Submission Date:** 27 July 2026
+**Name:** pujanchohan &nbsp;|&nbsp; **Course:** Generative AI &nbsp;|&nbsp; **Submission Date:** 27 July 2026
 
 ## 📄 License
 
