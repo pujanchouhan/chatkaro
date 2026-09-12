@@ -1,7 +1,7 @@
 """
-NeuraChat — Advanced AI-Powered Chatbot using Large Language Models (LLMs)
----------------------------------------------------------------------------
-A conversational chatbot built with Streamlit and the Groq API
+PolyMind — Multi-Model AI Chat & Comparison Platform
+-----------------------------------------------------
+A multi-model AI chat platform built with Streamlit and the Groq API
 (OpenAI-compatible interface). Features multi-session chat history,
 real-time streaming, live multi-model comparison, free voice-to-text
 input (Groq Whisper), a dynamic color theme, and an in-app project
@@ -27,8 +27,8 @@ from openai import OpenAI, APIError, RateLimitError, AuthenticationError
 # Page configuration
 # ----------------------------------------------------------------------
 st.set_page_config(
-    page_title="NeuraChat — AI Chatbot",
-    page_icon="🧠",
+    page_title="PolyMind — Multi-Model AI Chat & Comparison Platform",
+    page_icon="◈",
     layout="wide",
     initial_sidebar_state="expanded",
 )
@@ -46,7 +46,7 @@ MODEL_LABELS = {
 }
 
 SYSTEM_PROMPT = (
-    "You are NeuraChat, a helpful, friendly, and knowledgeable AI assistant. "
+    "You are PolyMind, a helpful, friendly, and knowledgeable AI assistant. "
     "Answer clearly and concisely. If you are unsure of something, "
     "say so honestly instead of guessing."
 )
@@ -60,6 +60,8 @@ QUICK_PROMPTS = [
 ]
 
 THEME_PRESETS = {
+    "Signal Console": ("#101827", "#F97316", "#60A5FA"),
+    "Midnight Pulse": ("#0F172A", "#1D4ED8", "#22D3EE"),
     "Violet Dream": ("#6C5CE7", "#A29BFE", "#74B9FF"),
     "Sunset": ("#FF6B6B", "#FFA36C", "#FFD93D"),
     "Ocean": ("#0984E3", "#00CEC9", "#55EFC4"),
@@ -82,7 +84,7 @@ if "chats" not in st.session_state:
     st.session_state.active_chat = first_id
 
 if "theme" not in st.session_state:
-    st.session_state.theme = "Violet Dream"
+    st.session_state.theme = "Signal Console"
 
 if "pending_prompt" not in st.session_state:
     st.session_state.pending_prompt = None
@@ -95,183 +97,130 @@ c1, c2, c3 = THEME_PRESETS[st.session_state.theme]
 st.markdown(
     f"""
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Orbitron:wght@500;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap');
 
     html, body, [class*="css"] {{ font-family: 'Inter', sans-serif; }}
     #MainMenu {{visibility: hidden;}}
     footer {{visibility: hidden;}}
-    * {{ cursor: none !important; }}
 
     .stApp {{
-        background: linear-gradient(180deg, #FAFAFF 0%, #FFFFFF 100%);
+        background: radial-gradient(circle at top, rgba(96,165,250,0.10), transparent 30%), linear-gradient(180deg, #0B1017 0%, #121A26 100%);
+        color: #EAF2FF;
     }}
 
-    .hero {{
+    .brand-mark {{
+        display: inline-block;
+        font-family: 'Orbitron', sans-serif;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        background: linear-gradient(135deg, #E2E8F0 0%, #93C5FD 35%, #F9A8D4 100%);
+        -webkit-background-clip: text; background-clip: text; color: transparent;
+        text-shadow: 0 0 26px rgba(147,197,253,0.18);
+        animation: pulseGlow 4s ease-in-out infinite alternate;
+    }}
+    @keyframes pulseGlow {{
+        0% {{ filter: drop-shadow(0 0 0 rgba(96,165,250,0.10)); }}
+        100% {{ filter: drop-shadow(0 0 18px rgba(96,165,250,0.40)); }}
+    }}
+
+    .status-panel {{
         position: relative;
-        overflow: hidden;
-        background: linear-gradient(135deg, {c1} 0%, {c2} 50%, {c3} 100%);
-        background-size: 200% 200%;
-        animation: gradientShift 8s ease infinite;
-        padding: 2.2rem 2.2rem 1.8rem 2.2rem;
-        border-radius: 20px;
+        border: 1px solid rgba(148, 163, 184, 0.2);
+        background: rgba(15, 23, 42, 0.82);
+        border-radius: 18px;
+        padding: 1.2rem 1.4rem;
         margin-bottom: 1rem;
-        box-shadow: 0 12px 32px rgba(0,0,0,0.15);
+        box-shadow: 0 10px 30px rgba(2, 6, 23, 0.45);
     }}
-    @keyframes gradientShift {{
-        0% {{ background-position: 0% 50%; }}
-        50% {{ background-position: 100% 50%; }}
-        100% {{ background-position: 0% 50%; }}
+    .sidebar-block {{
+        border: 1px solid rgba(148, 163, 184, 0.18);
+        background: rgba(15, 23, 42, 0.44);
+        border-radius: 12px;
+        padding: 0.85rem 0.75rem;
+        margin: 0.5rem 0 0.9rem 0;
     }}
-    .hero::before {{
-        content: ''; position: absolute; top: -50px; right: -50px;
-        width: 200px; height: 200px; border-radius: 50%;
-        background: rgba(255,255,255,0.12);
+    .sidebar-section-label {{
+        display: block; margin-bottom: 0.5rem; color: #93C5FD; font-size: 0.68rem; letter-spacing: 0.14em; text-transform: uppercase;
+        font-family: 'JetBrains Mono', monospace; font-weight: 600;
     }}
-    .hero::after {{
-        content: ''; position: absolute; bottom: -80px; left: 20%;
-        width: 260px; height: 260px; border-radius: 50%;
-        background: rgba(255,255,255,0.08);
+    .status-header {{ display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; }}
+    .eyebrow {{
+        font-family: 'JetBrains Mono', monospace; font-size: 0.68rem; letter-spacing: 0.14em; text-transform: uppercase;
+        color: #93C5FD; opacity: 0.9; margin-bottom: 0.35rem;
     }}
-    .hero h1 {{ color: white; font-weight: 900; font-size: 2.2rem; margin: 0; letter-spacing: -0.5px; position: relative; z-index: 2;}}
-    .hero p {{ color: rgba(255,255,255,0.95); font-size: 1rem; margin-top: 0.4rem; margin-bottom: 0; position: relative; z-index: 2;}}
-    .hero-badges {{ margin-top: 0.9rem; display: flex; gap: 0.5rem; flex-wrap: wrap; position: relative; z-index: 2;}}
-    .badge {{ background: rgba(255,255,255,0.25); color: white; padding: 0.3rem 0.75rem;
-             border-radius: 20px; font-size: 0.78rem; font-weight: 700; backdrop-filter: blur(6px); }}
+    .status-panel h1 {{
+        margin: 0; font-size: clamp(1.7rem, 3vw, 2.4rem); font-weight: 800; color: #F8FBFF; letter-spacing: -0.04em;
+    }}
+    .status-strip {{ display: flex; flex-wrap: wrap; gap: 0.6rem; margin-top: 0.8rem; }}
+    .status-item {{
+        border: 1px solid rgba(148,163,184,0.22); border-radius: 10px; padding: 0.45rem 0.7rem; background: rgba(15, 23, 42, 0.6);
+        font-family: 'JetBrains Mono', monospace; font-size: 0.73rem; color: #DDEAFE;
+    }}
+    .status-item strong {{ color: #F8FAFC; }}
+    .status-live {{
+        display: inline-flex; align-items: center; gap: 0.45rem; background: rgba(249,115,22,0.08); border: 1px solid rgba(249,115,22,0.45);
+        color: #FDBA74; border-radius: 999px; padding: 0.35rem 0.7rem; font-size: 0.72rem; font-weight: 600;
+    }}
+    .status-live::before {{ content: ''; width: 8px; height: 8px; border-radius: 50%; background: #F97316; box-shadow: 0 0 12px rgba(249,115,22,0.8); }}
 
-    div[data-testid="stChatMessage"] {{ border-radius: 16px; padding: 0.3rem 0.2rem; margin-bottom: 0.4rem; }}
+    div[data-testid="stTabs"] [role="tablist"] {{ gap: 0.4rem; }}
+    div[data-testid="stTabs"] [role="tab"] {{
+        border: 1px solid rgba(148,163,184,0.15); border-radius: 10px 10px 0 0; background: rgba(15,23,42,0.4); color: #C7D2FE;
+        padding: 0.55rem 0.8rem; font-weight: 600;
+    }}
+    div[data-testid="stTabs"] [role="tab"][aria-selected="true"] {{
+        background: rgba(96,165,250,0.12); border-color: rgba(96,165,250,0.45); color: #E0F2FE; box-shadow: inset 0 -1px 0 rgba(96,165,250,0.4);
+    }}
 
-    section[data-testid="stSidebar"] {{ background: linear-gradient(180deg, #F7F5FF 0%, #FFFFFF 100%); border-right: 1px solid #ECE8FF; }}
-    section[data-testid="stSidebar"] h1, section[data-testid="stSidebar"] h3 {{ font-weight: 800; color: {c1}; }}
+    div[data-testid="stChatMessage"] {{
+        border-radius: 14px; padding: 0.3rem 0.2rem; margin-bottom: 0.4rem;
+        background: rgba(15, 23, 42, 0.72); border: 1px solid rgba(148, 163, 184, 0.18);
+        box-shadow: none;
+    }}
 
-    .stButton>button {{ border-radius: 10px; font-weight: 600; border: none; transition: transform 0.15s ease; }}
-    .stButton>button:hover {{ transform: translateY(-1px); }}
+    section[data-testid="stSidebar"] {{ background: linear-gradient(180deg, #0D1521 0%, #101827 100%); border-right: 1px solid rgba(148,163,184,0.18); }}
+    section[data-testid="stSidebar"] h1, section[data-testid="stSidebar"] h3 {{ font-weight: 800; color: #F8FBFF; }}
+    section[data-testid="stSidebar"] .stSelectbox label, section[data-testid="stSidebar"] .stTextInput label {{ color: #DCEAFD; }}
+
+    .stButton>button {{ border-radius: 10px; font-weight: 600; border: none; transition: none; background: linear-gradient(135deg, {c2}, #FB923C); color: white; }}
+    .stButton>button:hover {{ opacity: 0.96; }}
+    .stButton>button:focus-visible {{ outline: 2px solid #93C5FD; outline-offset: 2px; }}
+    .stCheckbox, .stRadio, .stSelectbox, .stTextInput, .stSlider {{ opacity: 1; }}
 
     .glass-card {{
-        background: rgba(255,255,255,0.7);
-        border: 1px solid #ECEAFB;
+        background: rgba(15, 23, 42, 0.72);
+        border: 1px solid rgba(148, 163, 184, 0.18);
         border-radius: 16px;
         padding: 1.1rem 1.3rem;
-        box-shadow: 0 4px 18px rgba(108,92,231,0.08);
-        backdrop-filter: blur(6px);
         margin-bottom: 0.8rem;
+        color: #E2E8F0;
     }}
 
     .metric-card {{
-        background: white; border: 1px solid #ECEAFB; border-radius: 14px;
-        padding: 1rem 1.2rem; text-align: center; box-shadow: 0 2px 10px rgba(108,92,231,0.06);
+        background: rgba(15, 23, 42, 0.72); border: 1px solid rgba(148, 163, 184, 0.18); border-radius: 14px;
+        padding: 1rem 1.2rem; text-align: center; box-shadow: none;
     }}
-    .metric-card .num {{ font-size: 1.8rem; font-weight: 800; color: {c1}; }}
-    .metric-card .lbl {{ font-size: 0.8rem; color: #7A7A8C; margin-top: 0.2rem; }}
+    .metric-card .num {{ font-size: 1.8rem; font-weight: 800; color: {c3}; font-family: 'JetBrains Mono', monospace; }}
+    .metric-card .lbl {{ font-size: 0.76rem; color: #C9D8F4; margin-top: 0.2rem; letter-spacing: 0.02em; }}
 
     .model-tag {{
-        display: inline-block; background: {c1}; color: white; font-size: 0.72rem;
-        font-weight: 700; padding: 0.15rem 0.6rem; border-radius: 12px; margin-bottom: 0.4rem;
+        display: inline-block; background: rgba(96, 165, 250, 0.12); color: #BFDBFE; border: 1px solid rgba(96,165,250,0.45);
+        font-size: 0.72rem; font-family: 'JetBrains Mono', monospace; font-weight: 600; padding: 0.2rem 0.6rem; border-radius: 8px; margin-bottom: 0.4rem;
     }}
 
-    .footnote {{ text-align: center; color: #8A8A8A; font-size: 0.8rem; margin-top: 1rem; }}
-    .timestamp {{ font-size: 0.7rem; color: #A8A8B8; margin-top: -0.3rem; }}
+    .footnote {{ text-align: center; color: #93A7C9; font-size: 0.8rem; margin-top: 1rem; font-family: 'JetBrains Mono', monospace; }}
+    .timestamp {{ font-size: 0.7rem; color: #9DB3D3; margin-top: -0.3rem; font-family: 'JetBrains Mono', monospace; }}
+    div[data-testid="stChatInput"] {{
+        border: 1px solid rgba(96,165,250,0.38); background: rgba(15, 23, 42, 0.86); border-radius: 14px;
+    }}
+    div[data-testid="stChatInput"] textarea {{ background: transparent; color: #EAF2FF; }}
+    div[data-testid="stChatInput"] button {{ background: linear-gradient(135deg, {c2}, #FB923C); color: white; border: none; }}
+
+    .code-font {{ font-family: 'JetBrains Mono', monospace; }}
     </style>
     """,
     unsafe_allow_html=True,
 )
-
-# ----------------------------------------------------------------------
-# Custom animated cursor — glowing dot + trailing particle swarm.
-# Fully tears down and rebuilds itself on every rerun (theme change,
-# navigation, etc.) so it can never end up in a "half-initialized,
-# cursor hidden" state.
-# ----------------------------------------------------------------------
-components.html(
-    f"""
-    <script>
-    const doc = window.parent.document;
-
-    // 1. Fully clean up any previous instance (listeners, rAF loop, elements)
-    if (window.parent.__ncCleanup) {{
-        try {{ window.parent.__ncCleanup(); }} catch (e) {{}}
-    }}
-
-    const oldStyle = doc.getElementById('nc-cursor-style');
-    if (oldStyle) oldStyle.remove();
-    doc.querySelectorAll('.nc-cursor-el').forEach(el => el.remove());
-
-    // 2. Inject fresh styles for the current theme
-    const style = doc.createElement('style');
-    style.id = 'nc-cursor-style';
-    style.innerHTML = `
-        .nc-cursor-el {{ position: fixed; border-radius: 50%; pointer-events: none; top: 0; left: 0; }}
-        #nc-cursor-dot {{
-            width: 16px; height: 16px;
-            background: radial-gradient(circle, {c1}, {c3});
-            z-index: 999999; transform: translate(-50%, -50%);
-            transition: width 0.15s ease, height 0.15s ease;
-            box-shadow: 0 0 12px {c1}AA;
-        }}
-        .nc-particle {{
-            width: 8px; height: 8px; background: {c2}; z-index: 999997;
-            transform: translate(-50%, -50%);
-        }}
-    `;
-    doc.head.appendChild(style);
-
-    // 3. Build cursor dot + a small trailing particle swarm
-    const dot = doc.createElement('div');
-    dot.id = 'nc-cursor-dot'; dot.className = 'nc-cursor-el';
-    doc.body.appendChild(dot);
-
-    const PARTICLE_COUNT = 6;
-    const particles = [];
-    for (let i = 0; i < PARTICLE_COUNT; i++) {{
-        const p = doc.createElement('div');
-        p.className = 'nc-cursor-el nc-particle';
-        p.style.opacity = (1 - i / PARTICLE_COUNT) * 0.5;
-        p.style.width = (8 - i * 0.8) + 'px';
-        p.style.height = (8 - i * 0.8) + 'px';
-        doc.body.appendChild(p);
-        particles.push({{ el: p, x: 0, y: 0 }});
-    }}
-
-    let mouseX = -100, mouseY = -100;
-    let rafId = null;
-
-    function onMouseMove(e) {{
-        mouseX = e.clientX; mouseY = e.clientY;
-        dot.style.left = mouseX + 'px';
-        dot.style.top = mouseY + 'px';
-    }}
-    function onMouseDown() {{ dot.style.width = '10px'; dot.style.height = '10px'; }}
-    function onMouseUp() {{ dot.style.width = '16px'; dot.style.height = '16px'; }}
-
-    doc.addEventListener('mousemove', onMouseMove);
-    doc.addEventListener('mousedown', onMouseDown);
-    doc.addEventListener('mouseup', onMouseUp);
-
-    function animate() {{
-        let px = mouseX, py = mouseY;
-        for (let i = 0; i < particles.length; i++) {{
-            const p = particles[i];
-            p.x += (px - p.x) * 0.35;
-            p.y += (py - p.y) * 0.35;
-            p.el.style.left = p.x + 'px';
-            p.el.style.top = p.y + 'px';
-            px = p.x; py = p.y;
-        }}
-        rafId = requestAnimationFrame(animate);
-    }}
-    animate();
-
-    // 4. Register cleanup so the NEXT rerun can tear this instance down cleanly
-    window.parent.__ncCleanup = function() {{
-        doc.removeEventListener('mousemove', onMouseMove);
-        doc.removeEventListener('mousedown', onMouseDown);
-        doc.removeEventListener('mouseup', onMouseUp);
-        if (rafId) cancelAnimationFrame(rafId);
-    }};
-    </script>
-    """,
-    height=0, width=0,
-)
-
 
 def new_chat():
     chat_id = str(uuid.uuid4())
@@ -297,32 +246,34 @@ active = st.session_state.chats[st.session_state.active_chat]
 # Sidebar
 # ----------------------------------------------------------------------
 with st.sidebar:
-    st.markdown("# 🧠 NeuraChat")
-    st.caption("Settings & Chat History")
-    st.divider()
-
+    st.markdown("<div class='brand-mark' style='font-size: 1.5rem;'>PolyMind</div>", unsafe_allow_html=True)
+    st.caption("control panel")
+    st.markdown("<div class='sidebar-block'>", unsafe_allow_html=True)
+    st.markdown("<span class='sidebar-section-label'>session</span>", unsafe_allow_html=True)
     api_key_input = st.text_input(
-        "🔑 Groq API Key", type="password",
+        "Groq API Key", type="password",
         value=os.environ.get("GROQ_API_KEY", ""),
         help="Free key, no credit card: https://console.groq.com/keys",
     )
-
     model_choice = st.selectbox(
-        "🧩 Model", options=list(MODEL_LABELS.keys()),
+        "Active model", options=list(MODEL_LABELS.keys()),
         format_func=lambda x: MODEL_LABELS[x], index=0,
     )
-
     st.selectbox(
-        "🎨 Theme", options=list(THEME_PRESETS.keys()),
+        "Theme", options=list(THEME_PRESETS.keys()),
         key="theme",
     )
+    st.markdown("</div>", unsafe_allow_html=True)
 
-    with st.expander("⚙️ Advanced parameters"):
+    st.markdown("<div class='sidebar-block'>", unsafe_allow_html=True)
+    st.markdown("<span class='sidebar-section-label'>runtime</span>", unsafe_allow_html=True)
+    with st.expander("Advanced parameters"):
         temperature = st.slider("Creativity (temperature)", 0.0, 1.5, 0.7, 0.1)
         max_tokens = st.slider("Max response length (tokens)", 100, 2000, 500, 50)
+    st.markdown("</div>", unsafe_allow_html=True)
 
-    st.divider()
-    st.markdown("### 💬 Chat History")
+    st.markdown("<div class='sidebar-block'>", unsafe_allow_html=True)
+    st.markdown("<span class='sidebar-section-label'>chat history</span>", unsafe_allow_html=True)
 
     if st.button("➕ New Chat", use_container_width=True):
         new_chat()
@@ -344,21 +295,26 @@ with st.sidebar:
                 st.rerun()
 
     st.divider()
-    st.caption("Built with Streamlit + Groq · GenAI Course Project")
+    st.caption("Built with Streamlit + Groq · Multi-Model AI Studio")
 
 # ----------------------------------------------------------------------
 # Hero header
 # ----------------------------------------------------------------------
 st.markdown(
-    """
-    <div class="hero">
-        <h1>🧠 NeuraChat</h1>
-        <p>An advanced AI chatbot platform — multi-model comparison, voice input, and real-time streaming, powered entirely by free open-source LLMs.</p>
-        <div class="hero-badges">
-            <span class="badge">⚡ Real-time streaming</span>
-            <span class="badge">🔬 Model comparison</span>
-            <span class="badge">🎤 Voice input</span>
-            <span class="badge">🆓 100% free stack</span>
+    f"""
+    <div class="status-panel">
+        <div class="status-header">
+            <div>
+                <div class="eyebrow">signal status</div>
+                <h1 class="brand-word">PolyMind</h1>
+            </div>
+            <div class="status-live">live session ready</div>
+        </div>
+        <div class="status-strip">
+            <div class="status-item"><strong>model</strong> · {MODEL_LABELS[model_choice]}</div>
+            <div class="status-item"><strong>key</strong> · Groq active</div>
+            <div class="status-item"><strong>latency</strong> · {avg_latency_val if 'avg_latency_val' in locals() else '0.0'}s</div>
+            <div class="status-item"><strong>mode</strong> · {temperature:.1f} temp / {max_tokens} tok</div>
         </div>
     </div>
     """,
@@ -369,13 +325,13 @@ st.markdown(
 # Tabs
 # ----------------------------------------------------------------------
 tab_chat, tab_compare, tab_voice, tab_insights, tab_info = st.tabs(
-    ["💬 Chat", "🔬 Compare Models", "🎤 Voice Input", "📊 Insights", "📋 Project Info"]
+    ["chat", "compare", "voice", "insights", "project"]
 )
 
 # ======================== CHAT TAB ========================
 with tab_chat:
     if len(active["messages"]) == 1:
-        st.info("👋 Hi! I'm NeuraChat. Ask me anything, or try a quick prompt below.")
+        st.info("👋 Hi! I'm PolyMind. Ask me anything, or try a quick prompt below.")
         st.markdown("**✨ Quick prompts to get started:**")
         qp_cols = st.columns(len(QUICK_PROMPTS))
         for i, qp in enumerate(QUICK_PROMPTS):
@@ -459,7 +415,7 @@ with tab_chat:
         )
         st.download_button(
             "⬇️ Download this conversation", transcript,
-            file_name=f"neurachat_{active['title'][:20]}.txt", mime="text/plain",
+            file_name=f"polymind_{active['title'][:20]}.txt", mime="text/plain",
         )
 
 # ======================== COMPARE MODELS TAB ========================
@@ -513,7 +469,7 @@ with tab_compare:
 with tab_voice:
     st.subheader("🎤 Voice-to-Text Input")
     st.caption(
-        "Record a voice message and NeuraChat will transcribe it for free using Groq's "
+        "Record a voice message and PolyMind will transcribe it for free using Groq's "
         "Whisper Large v3 model, then you can send it straight to the chat."
     )
 
